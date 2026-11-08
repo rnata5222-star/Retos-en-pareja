@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retos en Pareja (Edición Distancia)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            rose: '#ff2a6d',
+                            fire: '#ff0055',
+                            purple: '#9d00ff',
+                            dark: '#0f0817'
+                        }
+                    },
+                    boxShadow: {
+                        glow: '0 0 25px -5px rgba(255, 42, 109, 0.5)',
+                        'glow-purple': '0 0 25px -5px rgba(157, 0, 255, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Card Flip Styles */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0817; }
+        ::-webkit-scrollbar-thumb { background: #3b154c; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff2a6d; }
+
+        /* Glowing background animation */
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.08); }
+        }
+        .animate-glow { animation: pulseGlow 8s infinite ease-in-out; }
+    </style>
+</head>
+<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 selection:bg-brand-rose selection:text-white flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Ambient Background Effects -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-rose/20 rounded-full blur-[120px] animate-glow"></div>
+        <div class="absolute top-1/2 -right-40 w-96 h-96 bg-brand-purple/20 rounded-full blur-[120px] animate-glow" style="animation-delay: 4s;"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-red-600/15 rounded-full blur-[120px] animate-glow" style="animation-delay: 2s;"></div>
+    </div>
+
+    <div class="relative z-10 flex flex-col min-h-screen max-w-md mx-auto px-4 py-4 sm:py-6">
+
+        <!-- HEADER -->
+        <header class="text-center mb-4">
+            <div class="inline-flex items-center justify-center space-x-2 bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-pink-500/30 text-xs font-semibold text-pink-300 shadow-glow mb-2">
+                <i class="fa-solid fa-heart-pulse text-brand-rose animate-pulse"></i>
+                <span>Edición Parejas a Distancia</span>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-pink-400 via-rose-500 to-purple-500 bg-clip-text text-transparent">
+                Retos en Pareja
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">Conéctense, jueguen y sientan la llama sin importar los kilómetros</p>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 backdrop-blur-md mb-4 text-xs font-medium">
+            <button onclick="switchTab('cards')" id="tab-cards" class="py-2.5 px-2 rounded-xl transition-all duration-200 flex items-center justify-center space-x-1.5 bg-gradient-to-r from-brand-rose to-brand-fire text-white shadow-md">
+                <i class="fa-solid fa-dice"></i>
+                <span>Ruleta</span>
+            </button>
+            <button onclick="switchTab('secret')" id="tab-secret" class="py-2.5 px-2 rounded-xl transition-all duration-200 flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Caja Secreta</span>
+            </button>
+            <button onclick="switchTab('room')" id="tab-room" class="py-2.5 px-2 rounded-xl transition-all duration-200 flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span>Sala Vivo</span>
+            </button>
+        </div>
+
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 flex flex-col">
+
+            <!-- TAB 1: CARD SYSTEM / RULETA -->
+            <div id="view-cards" class="flex-1 flex flex-col">
+                
+                <!-- FILTER CATEGORIES -->
+                <div class="mb-4">
+                    <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">1. Elige una Categoría:</label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button onclick="selectCategory('all')" id="cat-all" class="cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-pink-500/40 bg-pink-500/20 text-pink-200 flex flex-col items-center justify-center space-y-1 transition-all">
+                            <i class="fa-solid fa-shuffle text-sm"></i>
+                            <span class="text-[10px]">Todas</span>
+                        </button>
+                        <button onclick="selectCategory('romantic')" id="cat-romantic" class="cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 flex flex-col items-center justify-center space-y-1 transition-all">
+                            <i class="fa-solid fa-heart text-rose-400 text-sm"></i>
+                            <span class="text-[10px]">Romántico</span>
+                        </button>
+                        <button onclick="selectCategory('hot')" id="cat-hot" class="cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 flex flex-col items-center justify-center space-y-1 transition-all">
+                            <i class="fa-solid fa-fire text-amber-500 text-sm"></i>
+                            <span class="text-[10px]">Picante +18</span>
+                        </button>
+                        <button onclick="selectCategory('funny')" id="cat-funny" class="cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 flex flex-col items-center justify-center space-y-1 transition-all">
+                            <i class="fa-solid fa-laugh-beam text-emerald-400 text-sm"></i>
+                            <span class="text-[10px]">Divertido</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TURN SELECTION & COUNTER -->
+                <div class="flex justify-between items-center bg-slate-900/60 border border-slate-800/80 rounded-xl p-2 mb-4 backdrop-blur-sm">
+                    <div class="flex items-center space-x-1">
+                        <button onclick="setTurn('él')" id="turn-el" class="px-3 py-1 rounded-lg text-xs font-medium bg-blue-600/30 text-blue-300 border border-blue-500/40">
+                            <i class="fa-solid fa-mars mr-1"></i>Turno ÉL
+                        </button>
+                        <button onclick="setTurn('ella')" id="turn-ella" class="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:text-white">
+                            <i class="fa-solid fa-venus mr-1"></i>Turno ELLA
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-slate-400 flex items-center space-x-1 px-2">
+                        <i class="fa-solid fa-layer-group text-brand-rose"></i>
+                        <span>Sin repetir: <strong id="remaining-count" class="text-white font-bold">160</strong> / <span id="total-cat-count">160</span></span>
+                    </div>
+                </div>
+
+                <!-- 3D FLIP CARD CONTAINER -->
+                <div class="perspective-1000 flex-1 min-h-[280px] sm:min-h-[320px] mb-4">
+                    <div id="card-inner" class="relative w-full h-full duration-700 transform-style-3d transition-transform cursor-pointer shadow-2xl rounded-3xl" onclick="flipCurrentCard()">
+                        
+                        <!-- CARD FRONT (Cover) -->
+                        <div class="absolute inset-0 w-full h-full rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/80 border-2 border-pink-500/30 p-6 flex flex-col items-center justify-between text-center backface-hidden shadow-glow">
+                            <div class="w-full flex justify-between items-center text-xs text-pink-400/70">
+                                <span><i class="fa-solid fa-lock text-xs mr-1"></i> Reto Encriptado</span>
+                                <span id="card-turn-badge" class="bg-pink-500/20 px-2.5 py-0.5 rounded-full text-pink-300 border border-pink-500/30 font-semibold">Turno de Él</span>
+                            </div>
+                            
+                            <div class="my-auto flex flex-col items-center">
+                                <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-brand-rose to-purple-600 flex items-center justify-center mb-4 shadow-glow animate-pulse">
+                                    <i class="fa-solid fa-envelope-open-text text-3xl text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-100">¿Aceptas el Desafío?</h3>
+                                <p class="text-xs text-slate-400 mt-2 max-w-[220px]">Toca la tarjeta para destapar el reto preparado para ti.</p>
+                            </div>
+
+                            <div class="text-xs text-pink-400/80 font-medium flex items-center space-x-1.5 animate-bounce">
+                                <span>Toca para revelar</span>
+                                <i class="fa-solid fa-hand-pointer"></i>
+                            </div>
+                        </div>
+
+                        <!-- CARD BACK (Content) -->
+                        <div class="absolute inset-0 w-full h-full rounded-3xl bg-gradient-to-br from-slate-900 via-purple-950/90 to-slate-950 border-2 border-brand-rose p-5 flex flex-col justify-between text-center backface-hidden rotate-y-180 shadow-glow">
+                            <div class="flex justify-between items-center">
+                                <span id="card-cat-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                    <i class="fa-solid fa-fire mr-1"></i> Picante
+                                </span>
+                                <span id="timer-display" class="hidden text-xs font-mono font-bold bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full border border-amber-500/40">
+                                    <i class="fa-regular fa-clock mr-1"></i> <span id="timer-sec">60</span>s
+                                </span>
+                            </div>
+
+                            <!-- Challenge Text Content -->
+                            <div class="my-auto py-2">
+                                <p id="challenge-text" class="font-serif text-lg sm:text-xl font-semibold leading-relaxed text-slate-100 italic">
+                                    "Cierra los ojos y envía una nota de voz de 20 segundos describiendo exactamente qué te gustaría que te hicieran si estuvieran juntos en este momento."
+                                </p>
+                            </div>
+
+                            <!-- Action Footer Inside Card -->
+                            <div class="space-y-2 pt-2 border-t border-slate-800/80">
+                                <button onclick="event.stopPropagation(); completeChallenge();" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-circle-check text-sm"></i>
+                                    <span>¡RETO CUMPLIDO! (+100 PTS)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- BOTTOM CONTROLS -->
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="drawNewCard()" class="py-3 px-4 bg-gradient-to-r from-brand-rose via-brand-fire to-purple-600 hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-glow transition-all active:scale-95 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-dice-five text-base"></i>
+                        <span>Siguiente Reto</span>
+                    </button>
+                    <button onclick="startExpressTimer()" class="py-3 px-4 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 font-semibold text-xs rounded-2xl transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-stopwatch text-amber-400 text-base"></i>
+                        <span>Modo Express (60s)</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: SECRET CUSTOM CHALLENGE / CAJA SECRETA -->
+            <div id="view-secret" class="hidden flex-1 flex flex-col space-y-4">
+                
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 backdrop-blur-md">
+                    <h2 class="text-sm font-bold text-pink-300 flex items-center space-x-2 mb-1">
+                        <i class="fa-solid fa-pen-ruler"></i>
+                        <span>1. Redacta un Reto Secreto a tu Pareja</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-3">Tu pareja NO sabrá qué reto escribiste hasta que abra la caja virtual.</p>
+
+                    <textarea id="custom-challenge-input" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-rose resize-none mb-3" placeholder="Escribe aquí un reto privado, pervertido, divertido o amoroso..."></textarea>
+
+                    <button onclick="generateSecretGift()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-glow transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-gift"></i>
+                        <span>Empaquetar Caja de Regalo Secreta</span>
+                    </button>
+                </div>
+
+                <!-- BOX OPENING SECTION -->
+                <div id="gift-box-area" class="hidden flex-1 bg-gradient-to-br from-slate-900 to-purple-950/60 border border-purple-500/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center">
+                    <div id="gift-icon" class="w-24 h-24 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-3xl flex items-center justify-center text-white text-4xl shadow-glow-purple cursor-pointer transform hover:scale-105 transition-all mb-4 animate-bounce" onclick="openSecretGift()">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">¡Tienes una Caja de Regalo Secreta!</h3>
+                    <p class="text-xs text-slate-400 mb-4">Haz clic sobre la caja para desempacar el reto sorpresa.</p>
+                    
+                    <div id="revealed-secret-text" class="hidden w-full p-4 bg-slate-950/90 border border-pink-500/40 rounded-xl text-sm font-serif italic text-pink-200 leading-relaxed shadow-lg mb-4">
+                        <!-- Secret content will appear here -->
+                    </div>
+
+                    <button id="btn-copy-link" onclick="copySecretCode()" class="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-xs text-pink-300 border border-pink-500/30 rounded-xl transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Copiar Enlace Secreto para enviar</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- TAB 3: LIVE ROOM (FIREBASE MULTIPLAYER SYNC) -->
+            <div id="view-room" class="hidden flex-1 flex flex-col space-y-4">
+                
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 backdrop-blur-md">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-sm font-bold text-purple-300 flex items-center space-x-2">
+                            <i class="fa-solid fa-tower-broadcast animate-pulse text-rose-500"></i>
+                            <span>Sala Sincronizada a Distancia</span>
+                        </h2>
+                        <span id="room-status-badge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Sin conectar</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Crea una sala compartida para sincronizar los retos en vivo en las pantallas de ambos teléfonos.</p>
+
+                    <!-- ROOM FORM -->
+                    <div id="room-controls" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="createRoom()" class="py-2.5 bg-gradient-to-r from-brand-rose to-purple-600 text-white font-bold text-xs rounded-xl shadow-glow transition-all flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                <span>Crear Nueva Sala</span>
+                            </button>
+                            <button onclick="showJoinRoomInput()" class="py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                                <span>Unirse con Código</span>
+                            </button>
+                        </div>
+
+                        <!-- Join Input Area -->
+                        <div id="join-input-container" class="hidden space-y-2 pt-2">
+                            <input type="text" id="room-code-input" placeholder="Ej: LOVE-8492" class="w-full bg-slate-950 border border-purple-500/50 rounded-xl px-3 py-2 text-xs text-center font-mono text-white tracking-widest focus:outline-none focus:border-brand-rose uppercase">
+                            <button onclick="joinRoom()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all">
+                                Unirse Ahora
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ROOM ACTIVE INFO -->
+                    <div id="room-info" class="hidden mt-3 p-3 bg-slate-950/80 border border-purple-500/40 rounded-xl text-center">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-widest">Código de Tu Sala:</span>
+                        <div class="text-2xl font-mono font-extrabold text-pink-400 tracking-wider my-1" id="display-room-code">LOVE-0000</div>
+                        <p class="text-[11px] text-slate-400">Comparte este código con tu pareja para que se conecte.</p>
+                        <button onclick="leaveRoom()" class="mt-2 text-[11px] text-rose-400 underline hover:text-rose-300">Salir de la sala</button>
+                    </div>
+                </div>
+
+                <!-- LIVE CHALLENGE DISPLAY IN ROOM -->
+                <div class="flex-1 bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between text-center min-h-[220px]">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400"><i class="fa-solid fa-wifi text-emerald-400 mr-1"></i> Estado Sincronizado</span>
+                        <span id="live-turn-display" class="font-bold text-pink-400">Esperando turno...</span>
+                    </div>
+
+                    <div class="my-auto py-4">
+                        <p id="live-challenge-text" class="text-sm sm:text-base font-serif italic text-slate-200">
+                            "Selecciona 'Enviar Reto Aleatorio a la Sala' para que aparezca simultáneamente en la pantalla de ambos."
+                        </p>
+                    </div>
+
+                    <button onclick="sendLiveChallenge()" id="btn-send-live" class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs rounded-xl shadow-glow transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Lanzar Reto Aleatorio a la Sala</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- FOOTER / STATS -->
+        <footer class="mt-4 pt-3 border-t border-slate-900 flex justify-between items-center text-[11px] text-slate-500">
+            <div class="flex items-center space-x-1">
+                <i class="fa-solid fa-trophy text-amber-500"></i>
+                <span>Completados: <strong id="score-count" class="text-slate-200">0</strong></span>
+            </div>
+            <div>
+                <button onclick="resetHistory()" class="hover:text-pink-400 transition-colors">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar Retos
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- UI NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 border border-brand-rose/60 text-slate-100 text-xs px-4 py-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center space-x-2">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-brand-rose"></i>
+        <span id="toast-message">Notificación</span>
+    </div>
+
+    <!-- FIREBASE MODULE SYSTEM FOR REALTIME ROOM (Rule 1 & Rule 3 Compliant) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config fallback handling
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'distancia-app-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let currentRoomId = null;
+        let unsubscribeRoom = null;
+
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Authenticate first before operations
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    signInWithCustomToken(auth, __initial_auth_token).then(userCred => {
+                        currentUser = userCred.user;
+                    }).catch(() => {
+                        signInAnonymously(auth).then(userCred => currentUser = userCred.user);
+                    });
+                } else {
+                    signInAnonymously(auth).then(userCred => currentUser = userCred.user);
+                }
+            } catch(e) {
+                console.log("Modo offline o sin configuración de Firebase:", e);
+            }
+        }
+
+        // Global functions exposed to window
+        window.createRoom = async function() {
+            const randomCode = 'LOVE-' + Math.floor(1000 + Math.random() * 9000);
+            currentRoomId = randomCode;
+
+            document.getElementById('display-room-code').innerText = randomCode;
+            document.getElementById('room-controls').classList.add('hidden');
+            document.getElementById('room-info').classList.remove('hidden');
+            document.getElementById('room-status-badge').innerText = 'Sala Activa';
+            document.getElementById('room-status-badge').className = 'text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30';
+
+            showToast("Sala creada. Código: " + randomCode, "fa-circle-check");
+
+            if (db) {
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', randomCode);
+                await setDoc(roomRef, {
+                    code: randomCode,
+                    currentChallenge: "¡Sala vinculada! Haz clic abajo para lanzar el primer reto.",
+                    turn: "Él / Ella",
+                    createdAt: Date.now()
+                });
+                listenToRoom(randomCode);
+            }
+        };
+
+        window.joinRoom = async function() {
+            const inputCode = document.getElementById('room-code-input').value.trim().toUpperCase();
+            if (!inputCode) {
+                showToast("Ingresa un código válido", "fa-triangle-exclamation");
+                return;
+            }
+
+            currentRoomId = inputCode;
+            document.getElementById('display-room-code').innerText = inputCode;
+            document.getElementById('room-controls').classList.add('hidden');
+            document.getElementById('room-info').classList.remove('hidden');
+            document.getElementById('room-status-badge').innerText = 'Conectado';
+            document.getElementById('room-status-badge').className = 'text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30';
+
+            showToast("Conectado a la sala " + inputCode, "fa-wifi");
+
+            if (db) {
+                listenToRoom(inputCode);
+            }
+        };
+
+        window.leaveRoom = function() {
+            if (unsubscribeRoom) unsubscribeRoom();
+            currentRoomId = null;
+            document.getElementById('room-controls').classList.remove('hidden');
+            document.getElementById('room-info').classList.add('hidden');
+            document.getElementById('join-input-container').classList.add('hidden');
+            document.getElementById('room-status-badge').innerText = 'Sin conectar';
+            document.getElementById('room-status-badge').className = 'text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30';
+            showToast("Has salido de la sala", "fa-door-open");
+        };
+
+        function listenToRoom(code) {
+            if (!db) return;
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
+            unsubscribeRoom = onSnapshot(roomRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    if (data.currentChallenge) {
+                        document.getElementById('live-challenge-text').innerText = `"${data.currentChallenge}"`;
+                    }
+                    if (data.turn) {
+                        document.getElementById('live-turn-display').innerText = `Turno: ${data.turn}`;
+                    }
+                }
+            }, (error) => {
+                console.error("Error escuchando la sala:", error);
+            });
+        }
+
+        window.sendLiveChallenge = async function() {
+            const challenge = getRandomChallenge();
+            document.getElementById('live-challenge-text').innerText = `"${challenge.text}"`;
+            
+            showToast("¡Nuevo reto enviado a la sala!", "fa-paper-plane");
+            confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
+
+            if (db && currentRoomId) {
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+                await setDoc(roomRef, {
+                    currentChallenge: challenge.text,
+                    category: challenge.cat,
+                    turn: window.currentTurn === 'él' ? 'Ella' : 'Él',
+                    updatedAt: Date.now()
+                }, { merge: true });
+            }
+        };
+    </script>
+
+    <!-- CORE LOGIC & 150+ CHALLENGES DATABASE -->
+    <script>
+        // --- COMPLETE DATABASE OF 160+ DISTANCE CHALLENGES ---
+        const CHALLENGES_DB = [
+            // ROMÁNTICO (55 Retos)
+            { id: 1, cat: 'romantic', text: 'Envía una nota de voz de 30 segundos susurrando 3 cosas que amas profundamente de la otra persona.' },
+            { id: 2, cat: 'romantic', text: 'Haz una foto rápida de tus ojos mirando a la cámara y envíala diciendo qué pensabas de los dos hoy.' },
+            { id: 3, cat: 'romantic', text: 'Escribe un micro-cuento de 4 líneas en WhatsApp imaginando su primer reencuentro en el aeropuerto/estación.' },
+            { id: 4, cat: 'romantic', text: 'Busca una canción que te recuerde a su primer beso y envíasela en enlace para escucharla al mismo tiempo.' },
+            { id: 5, cat: 'romantic', text: 'Graba un video de 10 segundos enviando un beso volado bien lento a la cámara.' },
+            { id: 6, cat: 'romantic', text: 'Confiesa un momento exacto en el que te diste cuenta de que te habías enamorado por completo.' },
+            { id: 7, cat: 'romantic', text: 'Envía una foto del cielo donde estás ahora mismo y dile que bajo el mismo cielo estás pensando en él/ella.' },
+            { id: 8, cat: 'romantic', text: 'Planea la cita perfecta en 1 minuto: Describe lugar, comida y qué harán cuando vuelvan a verse.' },
+            { id: 9, cat: 'romantic', text: 'Envía un mensaje usando solo emojis que cuente la historia de cómo se conocieron. El otro debe adivinarla.' },
+            { id: 10, cat: 'romantic', text: 'Manda un audio diciendo "Te amo" en 3 idiomas diferentes.' },
+            { id: 11, cat: 'romantic', text: 'Dedícale una frase romántica de una película y pregúntale si sabe de cuál es.' },
+            { id: 12, cat: 'romantic', text: 'Dile cuál es tu prenda favorita de las que suele usar y por qué te encanta cómo le queda.' },
+            { id: 13, cat: 'romantic', text: 'Envía una foto de tu mano abierta para que la otra persona apoye su mano en la pantalla.' },
+            { id: 14, cat: 'romantic', text: 'Haz una lista de 3 lugares del mundo que sueñas con visitar juntos de la mano.' },
+            { id: 15, cat: 'romantic', text: 'Graba una nota de voz contando un sueño o fantasía bonita que hayas tenido recientemente con los dos.' },
+            { id: 16, cat: 'romantic', text: 'Compón un poema absurdo o tierno de 4 versos improvisado en 1 minuto.' },
+            { id: 17, cat: 'romantic', text: 'Envía un screenshot de la foto de ustedes dos que tengas como favorita en tu galería.' },
+            { id: 18, cat: 'romantic', text: 'Dile qué es lo primero que quieres hacer durante los primeros 5 minutos al volver a abrazarse.' },
+            { id: 19, cat: 'romantic', text: 'Manda una foto sonriendo lo más natural posible dedicada exclusivamente para él/ella.' },
+            { id: 20, cat: 'romantic', text: 'Dile una virtud tuya que sientas que ha mejorado desde que están juntos.' },
+            { id: 21, cat: 'romantic', text: 'Graba un audio cantando los primeros 15 segundos de "su canción" (sin importar si cantas mal).' },
+            { id: 22, cat: 'romantic', text: 'Envía un mensaje detallado sobre el recuerdo más divertido o tierno de su última videollamada.' },
+            { id: 23, cat: 'romantic', text: 'Elige un objeto a tu alrededor que te recuerde a tu pareja y explica por qué en un mensaje.' },
+            { id: 24, cat: 'romantic', text: 'Di 3 cosas que te hacen sonreír automáticamente cuando piensas en su rostro.' },
+            { id: 25, cat: 'romantic', text: 'Escribe una promesa bonita y realista para su próximo viaje juntos.' },
+            { id: 26, cat: 'romantic', text: 'Envía una foto de tus labios haciendo pose de beso en primer plano.' },
+            { id: 27, cat: 'romantic', text: 'Cuéntale un detalle pequeño o un gesto que tuvo contigo en el pasado y que nunca olvidaste.' },
+            { id: 28, cat: 'romantic', text: 'Dile cuál es tu hábito romántico favorito que tienen como pareja a distancia.' },
+            { id: 29, cat: 'romantic', text: 'Manda un sticker o GIF que represente exactamente el nivel de amor que sientes hoy.' },
+            { id: 30, cat: 'romantic', text: 'Dile qué olor o perfume te recuerda de inmediato a su piel.' },
+            { id: 31, cat: 'romantic', text: 'Graba una nota de voz corta leyendo una frase de amor famosa.' },
+            { id: 32, cat: 'romantic', text: 'Dile qué parte de su cuerpo consideras la más tierna o dulce.' },
+            { id: 33, cat: 'romantic', text: 'Escribe en un papel "Te extraño" con la mano no dominante, tómale foto y envíala.' },
+            { id: 34, cat: 'romantic', text: 'Haz una captura de pantalla de su chat de WhatsApp en un momento gracioso y envíasela.' },
+            { id: 35, cat: 'romantic', text: 'Dile cuál es el apodo cariñoso que más te gusta que te diga y por qué.' },
+            { id: 36, cat: 'romantic', text: 'Envía un mensaje contando qué estabas haciendo exactamente cuando pensaste en él/ella por primera vez hoy.' },
+            { id: 37, cat: 'romantic', text: 'Propón una noche de "Cita Virtual de Película" para este fin de semana con hora fija.' },
+            { id: 38, cat: 'romantic', text: 'Describe su abrazo perfecto: ¿fuerte y corto o suave y prolongado?' },
+            { id: 39, cat: 'romantic', text: 'Envía un audio de 10 segundos solamente suspirando el nombre de tu pareja.' },
+            { id: 40, cat: 'romantic', text: 'Confiesa cuál fue la primera impresión que tuviste al ver su perfil o conocerle.' },
+            { id: 41, cat: 'romantic', text: 'Envía una nota de voz diciendo 5 cosas por las que le das las gracias hoy.' },
+            { id: 42, cat: 'romantic', text: 'Dile qué plato de comida te encantaría cocinarle la próxima vez que se vean.' },
+            { id: 43, cat: 'romantic', text: 'Manda una foto de cómo estás vestido/a ahora mismo y pregunta si le gusta.' },
+            { id: 44, cat: 'romantic', text: 'Cuenta una tontería que te hizo recordar a tu pareja durante la semana.' },
+            { id: 45, cat: 'romantic', text: 'Promete enviarle una cartita o nota física por correo o dentro de su maleta en su próximo reencuentro.' },
+            { id: 46, cat: 'romantic', text: 'Envía un video cortoGuiñándole el ojo a la cámara.' },
+            { id: 47, cat: 'romantic', text: 'Pregúntale cuál es su fotografía favorita de los dos y comparte por qué te gusta tanto.' },
+            { id: 48, cat: 'romantic', text: 'Di algo positivo sobre su familia o sus mejores amigos que aprecies de corazón.' },
+            { id: 49, cat: 'romantic', text: 'Envía un mensaje de voz diciendo lo feliz que te hace estar construyendo un futuro juntos.' },
+            { id: 50, cat: 'romantic', text: 'Haz un dibujo rápido en digital o papel de ustedes dos tomados de la mano y envíalo.' },
+            { id: 51, cat: 'romantic', text: 'Dile qué canción te gustaría bailar apretados en la sala cuando se vuelvan a ver.' },
+            { id: 52, cat: 'romantic', text: 'Manda un mensaje deseándole el mejor día/noche con palabras especialmente dulces.' },
+            { id: 53, cat: 'romantic', text: 'Envía un mensaje secreto codificado y dale una pista para desenterrarlo.' },
+            { id: 54, cat: 'romantic', text: 'Dile qué cualidad suya admiras profundamente en su trabajo o día a día.' },
+            { id: 55, cat: 'romantic', text: 'Di en un audio: "Soy oficialmente tuyo/a sin importar la distancia".' },
+
+            // PICANTE / CALIENTE +18 (55 Retos)
+            { id: 56, cat: 'hot', text: 'Envía una foto teaser / pista provocativa (sin mostrarlo todo) de lo que llevas puesto debajo de la ropa.' },
+            { id: 57, cat: 'hot', text: 'Graba una nota de voz de 20 segundos con voz grave/susurrada detallando una fantasía traviesa para la próxima noche juntos.' },
+            { id: 58, cat: 'hot', text: 'Dile exactamente qué ropa interior te gustaría que lleve puesta la próxima vez que se vean en persona.' },
+            { id: 59, cat: 'hot', text: 'Envía un video corto de 5 segundos mordiéndote el labio inferior mirando fijamente a la cámara.' },
+            { id: 60, cat: 'hot', text: 'Responde con total sinceridad: ¿En qué lugar atrevido fuera de la cama te gustaría tener un encuentro íntimo?' },
+            { id: 61, cat: 'hot', text: 'Envía una foto de tu cuello o clavícula con una luz tenue.' },
+            { id: 62, cat: 'hot', text: 'Graba una nota de voz describiendo el último sueño erótico o muy hot que tuviste con él/ella.' },
+            { id: 63, cat: 'hot', text: 'Describe con lujo de detalles cómo sería tu masaje perfecto antes de subir la temperatura.' },
+            { id: 64, cat: 'hot', text: 'Envía un mensaje de texto de 3 líneas subido de tono que le haga acelerar las pulsaciones.' },
+            { id: 65, cat: 'hot', text: 'Dile cuál es la parte de tu cuerpo que más te gustaría que acaricie despacio durante horas.' },
+            { id: 66, cat: 'hot', text: 'Envía una foto descalzo/a o de tus piernas relajadas en la cama con un texto sugerente.' },
+            { id: 67, cat: 'hot', text: 'Graba un audio diciendo qué gemido o sonido tuyo te gustaría que escuchara esta misma noche.' },
+            { id: 68, cat: 'hot', text: 'Jueguen al "Verdad o Atrevimiento Hot": La pareja debe hacer una pregunta íntima y debes responder con 100% de verdad.' },
+            { id: 69, cat: 'hot', text: 'Envía una foto frente al espejo mostrando tu silueta con sombras o poca luz.' },
+            { id: 70, cat: 'hot', text: 'Confiesa cuál es tu posición o pose preferida en la intimidad y por qué te vuelve loco/a.' },
+            { id: 71, cat: 'hot', text: 'Manda una nota de voz de 15 segundos respirando agitado/a como si estuvieras a punto de tocarle.' },
+            { id: 72, cat: 'hot', text: 'Dile cuál es la prenda más sexy o provocativa que posees en tu armario.' },
+            { id: 73, cat: 'hot', text: 'Pídele a tu pareja que te dé una orden íntima y prométale cumplirla en su próximo reencuentro.' },
+            { id: 74, cat: 'hot', text: 'Envía un selfie con la mirada más seductora y provocadora que puedas poner.' },
+            { id: 75, cat: 'hot', text: 'Describe qué harías si en este momento te dijera: "Abre la puerta, estoy afuera de tu casa".' },
+            { id: 76, cat: 'hot', text: 'Manda un mensaje sugiriendo una sesión de besos intensos en videollamada de 2 minutos.' },
+            { id: 77, cat: 'hot', text: 'Dile cuál ha sido el momento íntimo juntos que más recuerdas cuando estás solo/a en tu cama.' },
+            { id: 78, cat: 'hot', text: 'Envía una foto tocando suavemente tus labios con un dedo.' },
+            { id: 79, cat: 'hot', text: 'Graba un audio susurrando un secreto sucio o picante que nunca le habías confesado.' },
+            { id: 80, cat: 'hot', text: 'Dile qué juguete, accesorio o juego nuevo te gustaría probar en la habitación.' },
+            { id: 81, cat: 'hot', text: 'Manda una foto del borde de tu espalda o cintura.' },
+            { id: 82, cat: 'hot', text: 'Describe con palabras qué tipo de caricias te encienden más rápido.' },
+            { id: 83, cat: 'hot', text: 'Escribe un mensaje sugerente de 3 palabras que comience con la letra de su nombre.' },
+            { id: 84, cat: 'hot', text: 'Propón una "Regla Secreta +18" que tendrán que cumplir durante toda la noche por chat.' },
+            { id: 85, cat: 'hot', text: 'Envía un video corto de 4 segundos pasándote una curva del cuerpo con las yemas de tus dedos.' },
+            { id: 86, cat: 'hot', text: 'Dile qué zona sensible de su cuerpo te provoca morder suavemente.' },
+            { id: 87, cat: 'hot', text: 'Confiesa si alguna vez has tenido pensamientos picantes mientras estabas en una llamada normal con él/ella.' },
+            { id: 88, cat: 'hot', text: 'Manda una nota de voz prometiéndole una recompensa caliente por haber ganado este reto.' },
+            { id: 89, cat: 'hot', text: 'Envía una foto de tus sábanas y dile lo vacías que se sienten sin su cuerpo al lado.' },
+            { id: 90, cat: 'hot', text: 'Dile a tu pareja qué tendría que hacer en este instante para hacerte temblar de deseo.' },
+            { id: 91, cat: 'hot', text: 'Confiesa qué sonido o frase picante te gusta escuchar durante la intimidad.' },
+            { id: 92, cat: 'hot', text: 'Envía un mensaje proponiendo un juego de roles o actuación para la próxima videollamada nocturna.' },
+            { id: 93, cat: 'hot', text: 'Manda una foto rápida de tu piel descubierta (hombro, muslo o abdomen).' },
+            { id: 94, cat: 'hot', text: 'Graba una nota de voz con tono provocador diciendo: "Eres mío/a y lo sabes".' },
+            { id: 95, cat: 'hot', text: 'Dile qué ropa te quitarías primero si estuvieran juntos a solas en este preciso segundo.' },
+            { id: 96, cat: 'hot', text: 'Propón una apuesta caliente: el que pierda la siguiente trivia pagará con un baile sexy por cámara.' },
+            { id: 97, cat: 'hot', text: 'Envía un gif provocativo que resuma tus ganas de verle sin ropa.' },
+            { id: 98, cat: 'hot', text: 'Describe en 10 palabras cómo sería una sesión de besos en la ducha.' },
+            { id: 99, cat: 'hot', text: 'Envía un audio corto imitando cómo le llamarías en la cama cuando el ritmo se acelera.' },
+            { id: 100, cat: 'hot', text: 'Dile cuál es tu mayor tentación cuando piensas en su cuerpo.' },
+            { id: 101, cat: 'hot', text: 'Manda una foto traviesa tomada con poca luz en el espejo.' },
+            { id: 102, cat: 'hot', text: 'Pídele que te describa exactamente qué trae puesto en este momento y evalúa si te parece sexy.' },
+            { id: 103, cat: 'hot', text: 'Dile en un audio: "Tengo un antojo de ti que no se me quita con nada".' },
+            { id: 104, cat: 'hot', text: 'Envía un video de 3 segundos guiñando un ojo y enviándole una sonrisa cómplice.' },
+            { id: 105, cat: 'hot', text: 'Escribe un micro-relato erótico de 3 oraciones donde los dos sean los protagonistas.' },
+            { id: 106, cat: 'hot', text: 'Pregúntale qué le gustaría que le hicieras despacio durante 15 minutos sin parar.' },
+            { id: 107, cat: 'hot', text: 'Manda un sticker picante acompañado de un mensaje tentador.' },
+            { id: 108, cat: 'hot', text: 'Dile qué rincón de la casa de tu pareja te parece más tentador para un encuentro rápido.' },
+            { id: 109, cat: 'hot', text: 'Confiesa tu mayor fantasía no cumplida hasta la fecha.' },
+            { id: 110, cat: 'hot', text: 'Envía un mensaje diciendo: "Prepárate para la noche de reencuentro porque no vamos a dormir nada".' },
+
+            // DIVERTIDO / DESAFÍOS (50 Retos)
+            { id: 111, cat: 'funny', text: 'Envía la foto más graciosa, fea o rara que puedas hacerte en este momento con la cara deformada.' },
+            { id: 112, cat: 'funny', text: 'Graba un audio imitando el sonido de 3 animales diferentes y tu pareja debe adivinarlos.' },
+            { id: 113, cat: 'funny', text: 'Haz un video de 10 segundos bailando sin música como si estuvieras en una fiesta electrónica.' },
+            { id: 114, cat: 'funny', text: 'Cuéntale un chiste tan malo que le dé risa por lo malo que es.' },
+            { id: 115, cat: 'funny', text: 'Envía una foto del objeto más extraño o gracioso que tengas guardado en tu habitación.' },
+            { id: 116, cat: 'funny', text: 'Habla por nota de voz durante 20 segundos con acento extranjero exagerado (español, argentino, mexicano, etc.).' },
+            { id: 117, cat: 'funny', text: 'Intenta rapear 4 líneas improvisadas sobre lo mucho que extrañas a tu pareja.' },
+            { id: 118, cat: 'funny', text: 'Envía una captura de pantalla de las últimas 3 cosas divertidas que buscaste en Google.' },
+            { id: 119, cat: 'funny', text: 'Haz una foto haciendo un peinado ridículo o despeinado extremo y envíala ya.' },
+            { id: 120, cat: 'funny', text: 'Graba una nota de voz contando una anécdota vergonzosa de tu infancia que casi nadie sepa.' },
+            { id: 121, cat: 'funny', text: 'Intenta adivinar qué color de calcetines o ropa interior lleva puesta tu pareja. Si fallas, mandas sticker gracioso.' },
+            { id: 122, cat: 'funny', text: 'Manda un audio imitando la voz de un personaje de caricaturas o película famosa.' },
+            { id: 123, cat: 'funny', text: 'Haz una escultura rápida con cualquier cosa de tu escritorio o mesa y dale un nombre.' },
+            { id: 124, cat: 'funny', text: 'Envía un video dramático actuando como si se te hubiera caído el teléfono en agua.' },
+            { id: 125, cat: 'funny', text: 'Descríbete usando solo nombres de platillos de comida fast food.' },
+            { id: 126, cat: 'funny', text: 'Haz un selfie imitando la cara de tu sticker o emoji favorito de WhatsApp.' },
+            { id: 127, cat: 'funny', text: 'Cuenta un secreto tonto o gracioso de tu día de hoy.' },
+            { id: 128, cat: 'funny', text: 'Envía una nota de voz diciendo un trabalenguas rápido 3 veces sin equivocarte.' },
+            { id: 129, cat: 'funny', text: 'Dile a tu pareja qué personaje de película animada se parece en personalidad.' },
+            { id: 130, cat: 'funny', text: 'Manda una foto de tu pie con un calcetín puesto de forma graciosa.' },
+            { id: 131, cat: 'funny', text: 'Graba un video corto haciendo 5 sentadillas mientras dices "Te amo" en cada una.' },
+            { id: 132, cat: 'funny', text: 'Confiesa qué comida extraña te gusta comer que a la mayoría le parece rara.' },
+            { id: 133, cat: 'funny', text: 'Envía una nota de voz fingiendo ser un locutor de radio presentando la canción favorita de ustedes.' },
+            { id: 134, cat: 'funny', text: 'Haz un screenshot del nivel de batería de tu teléfono y adivina el de tu pareja.' },
+            { id: 135, cat: 'funny', text: 'Manda un sticker de gato o perro que sientas que representa tu estado de ánimo actual.' },
+            { id: 136, cat: 'funny', text: 'Graba un audio susurrando como si estuvieras huyendo de un dinosaurio.' },
+            { id: 137, cat: 'funny', text: 'Envía una foto tuya intentando no sonreír con la cara seria más exagerada posible.' },
+            { id: 138, cat: 'funny', text: 'Escribe el nombre de tu pareja usando la barbilla o la nariz en la pantalla del celular.' },
+            { id: 139, cat: 'funny', text: 'Pídele a tu pareja que te dé un apodo ridículo que tendrás que usar en el chat durante 1 hora.' },
+            { id: 140, cat: 'funny', text: 'Envía un audio cantando una canción infantil con tono épico de ópera.' },
+            { id: 141, cat: 'funny', text: 'Haz una foto de tu sombra en la pared haciendo una forma graciosa con las manos.' },
+            { id: 142, cat: 'funny', text: 'Dile a tu pareja qué súper poder absurdo elegirías si pudieran tener uno juntos.' },
+            { id: 143, cat: 'funny', text: 'Manda un mensaje diciendo 5 palabras al azar que no tengan ninguna relación entre sí.' },
+            { id: 144, cat: 'funny', text: 'Recrea un meme famoso que conozcan ambos usando tu propia cara en foto.' },
+            { id: 145, cat: 'funny', text: 'Envía una nota de voz haciendo efectos de sonido de película de acción.' },
+            { id: 146, cat: 'funny', text: 'Graba un video corto de 5 segundos saludando como un rey/reina de la realeza.' },
+            { id: 147, cat: 'funny', text: 'Pregúntale a tu pareja si prefiere luchar contra 100 patos del tamaño de un caballo o 1 caballo del tamaño de un pato.' },
+            { id: 148, cat: 'funny', text: 'Manda un audio diciendo por qué ganarías en un apocalipsis zombi.' },
+            { id: 149, cat: 'funny', text: 'Envía una foto del rincón más desordenado de tu habitación con cara de culpable.' },
+            { id: 150, cat: 'funny', text: 'Dile qué programa de televisión vergonzoso te gusta ver a escondidas.' },
+            { id: 151, cat: 'funny', text: 'Haz un dibujo feo de un corazón en Paint o WhatsApp y pon sus iniciales.' },
+            { id: 152, cat: 'funny', text: 'Envía una nota de voz riéndote de la nada durante 10 segundos continuos.' },
+            { id: 153, cat: 'funny', text: 'Di qué talento oculto totalmente inservible tienes (mover las orejas, doblar la lengua, etc.).' },
+            { id: 154, cat: 'funny', text: 'Manda un mensaje en código MORSE o signos y tu pareja debe descifrarlo.' },
+            { id: 155, cat: 'funny', text: 'Graba un video guiñando ambos ojos de forma descoordinada.' },
+            { id: 156, cat: 'funny', text: 'Pregúntale cuál es su palabra favorita en español por cómo suena.' },
+            { id: 157, cat: 'funny', text: 'Envía una foto usando unos lentes de sol o sombrero adentro de la casa.' },
+            { id: 158, cat: 'funny', text: 'Cuenta cuál fue el malentendido más tonto que han tenido como pareja.' },
+            { id: 159, cat: 'funny', text: 'Manda un audio diciendo "Eres un sol" pero desafinando dramáticamente.' },
+            { id: 160, cat: 'funny', text: 'Desafía a tu pareja a no parpadear en videollamada durante 30 segundos.' }
+        ];
+
+        // --- GLOBAL STATE ---
+        let currentCategory = 'all';
+        let currentTurn = 'él'; // 'él' or 'ella'
+        let usedChallengeIds = new Set();
+        let currentChallenge = null;
+        let isFlipped = false;
+        let timerInterval = null;
+        let scoreCount = 0;
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            updateChallengeCounts();
+            drawNewCard();
+            checkUrlForSecretGift();
+        });
+
+        // --- NAVIGATION TABS ---
+        window.switchTab = function(tabName) {
+            ['cards', 'secret', 'room'].forEach(tab => {
+                const view = document.getElementById(`view-${tab}`);
+                const btn = document.getElementById(`tab-${tab}`);
+                if (tab === tabName) {
+                    view.classList.remove('hidden');
+                    btn.className = 'py-2.5 px-2 rounded-xl transition-all duration-200 flex items-center justify-center space-x-1.5 bg-gradient-to-r from-brand-rose to-brand-fire text-white shadow-md font-semibold';
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = 'py-2.5 px-2 rounded-xl transition-all duration-200 flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white font-medium';
+                }
+            });
+        };
+
+        // --- CATEGORY SELECTION ---
+        window.selectCategory = function(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = 'cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 flex flex-col items-center justify-center space-y-1 transition-all';
+            });
+
+            const activeBtn = document.getElementById(`cat-${cat}`);
+            if (activeBtn) {
+                activeBtn.className = 'cat-btn py-2 px-1 rounded-xl text-xs font-medium border border-pink-500/40 bg-pink-500/20 text-pink-200 flex flex-col items-center justify-center space-y-1 transition-all shadow-glow';
+            }
+
+            updateChallengeCounts();
+            drawNewCard();
+        };
+
+        // --- TURN SELECTION ---
+        window.setTurn = function(turn) {
+            currentTurn = turn;
+            const elBtn = document.getElementById('turn-el');
+            const ellaBtn = document.getElementById('turn-ella');
+            const turnBadge = document.getElementById('card-turn-badge');
+
+            if (turn === 'él') {
+                elBtn.className = 'px-3 py-1 rounded-lg text-xs font-medium bg-blue-600/30 text-blue-300 border border-blue-500/40';
+                ellaBtn.className = 'px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:text-white';
+                turnBadge.innerText = 'Turno de Él';
+            } else {
+                ellaBtn.className = 'px-3 py-1 rounded-lg text-xs font-medium bg-pink-600/30 text-pink-300 border border-pink-500/40';
+                elBtn.className = 'px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:text-white';
+                turnBadge.innerText = 'Turno de Ella';
+            }
+        };
+
+        // --- GET AVAILABLE CHALLENGES (WITHOUT REPETITION) ---
+        function getFilteredPool() {
+            return CHALLENGES_DB.filter(ch => {
+                const matchesCat = (currentCategory === 'all') || (ch.cat === currentCategory);
+                const notUsed = !usedChallengeIds.has(ch.id);
+                return matchesCat && notUsed;
+            });
+        }
+
+        function getRandomChallenge() {
+            let pool = getFilteredPool();
+            
+            // If pool is exhausted, reset history for this category
+            if (pool.length === 0) {
+                showToast("¡Has completado todos los retos de esta categoría! Reiniciando catálogo...", "fa-rotate");
+                // Clear only ids belonging to this category from used set
+                CHALLENGES_DB.forEach(ch => {
+                    if (currentCategory === 'all' || ch.cat === currentCategory) {
+                        usedChallengeIds.delete(ch.id);
+                    }
+                });
+                pool = getFilteredPool();
+            }
+
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            return pool[randomIndex];
+        }
+
+        function updateChallengeCounts() {
+            const pool = getFilteredPool();
+            const totalInCat = CHALLENGES_DB.filter(ch => (currentCategory === 'all') || (ch.cat === currentCategory)).length;
+            
+            document.getElementById('remaining-count').innerText = pool.length;
+            document.getElementById('total-cat-count').innerText = totalInCat;
+        }
+
+        // --- CARD DRAW & FLIP SYSTEM ---
+        window.drawNewCard = function() {
+            // Reset Card Flip State if flipped
+            const cardInner = document.getElementById('card-inner');
+            if (isFlipped) {
+                cardInner.classList.remove('rotate-y-180');
+                isFlipped = false;
+            }
+
+            // Stop Timer
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').classList.add('hidden');
+
+            // Pick Random Challenge
+            currentChallenge = getRandomChallenge();
+            usedChallengeIds.add(currentChallenge.id);
+
+            // Populate Card Content
+            document.getElementById('challenge-text').innerText = `"${currentChallenge.text}"`;
+            
+            // Badge formatting
+            const catBadge = document.getElementById('card-cat-badge');
+            if (currentChallenge.cat === 'romantic') {
+                catBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40';
+                catBadge.innerHTML = '<i class="fa-solid fa-heart mr-1"></i> Romántico';
+            } else if (currentChallenge.cat === 'hot') {
+                catBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40';
+                catBadge.innerHTML = '<i class="fa-solid fa-fire mr-1"></i> Picante +18';
+            } else {
+                catBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                catBadge.innerHTML = '<i class="fa-solid fa-laugh-beam mr-1"></i> Divertido';
+            }
+
+            updateChallengeCounts();
+        };
+
+        window.flipCurrentCard = function() {
+            const cardInner = document.getElementById('card-inner');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardInner.classList.add('rotate-y-180');
+            } else {
+                cardInner.classList.remove('rotate-y-180');
+            }
+        };
+
+        // --- EXPRESS TIMER (60s) ---
+        window.startExpressTimer = function() {
+            if (!isFlipped) {
+                flipCurrentCard();
+            }
+
+            const timerDisplay = document.getElementById('timer-display');
+            const timerSec = document.getElementById('timer-sec');
+            timerDisplay.classList.remove('hidden');
+
+            let timeLeft = 60;
+            timerSec.innerText = timeLeft;
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerSec.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showToast("¡Tiempo agotado! Cumple el reto o recibe un castigo...", "fa-clock");
+                }
+            }, 1000);
+        };
+
+        // --- COMPLETE CHALLENGE & CONFETTI ---
+        window.completeChallenge = function() {
+            scoreCount += 100;
+            document.getElementById('score-count').innerText = scoreCount;
+            
+            // Trigger Confetti Animation
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.7 }
+            });
+
+            showToast("¡+100 Puntos! Reto cumplido con éxito", "fa-trophy");
+            
+            // Switch Turn automatically
+            setTimeout(() => {
+                setTurn(currentTurn === 'él' ? 'ella' : 'él');
+                drawNewCard();
+            }, 1200);
+        };
+
+        window.resetHistory = function() {
+            usedChallengeIds.clear();
+            scoreCount = 0;
+            document.getElementById('score-count').innerText = "0";
+            updateChallengeCounts();
+            drawNewCard();
+            showToast("Historial y puntaje reiniciados", "fa-rotate-right");
+        };
+
+        // --- SECRET CUSTOM GIFT SYSTEM ---
+        let secretGiftText = "";
+
+        window.generateSecretGift = function() {
+            const input = document.getElementById('custom-challenge-input').value.trim();
+            if (!input) {
+                showToast("Escribe un reto antes de empaquetar", "fa-triangle-exclamation");
+                return;
+            }
+
+            secretGiftText = input;
+            document.getElementById('gift-box-area').classList.remove('hidden');
+            document.getElementById('revealed-secret-text').classList.add('hidden');
+            document.getElementById('gift-icon').classList.remove('hidden');
+            
+            // Create sharable hash URL
+            const encoded = btoa(encodeURIComponent(input));
+            const shareableUrl = window.location.origin + window.location.pathname + '?secret=' + encoded;
+            
+            window.currentSecretShareUrl = shareableUrl;
+            showToast("¡Caja de regalo creada! Haz clic abajo para compartirla", "fa-gift");
+        };
+
+        window.openSecretGift = function() {
+            if (!secretGiftText) return;
+            const revealedArea = document.getElementById('revealed-secret-text');
+            revealedArea.innerText = `"${secretGiftText}"`;
+            revealedArea.classList.remove('hidden');
+            
+            confetti({
+                particleCount: 100,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+
+            showToast("¡Caja Secreta Revelada!", "fa-box-open");
+        };
+
+        window.copySecretCode = function() {
+            if (!window.currentSecretShareUrl) {
+                showToast("Primero genera la caja secreta", "fa-info-circle");
+                return;
+            }
+            // Fallback execCommand for iframe compatibility
+            const tempInput = document.createElement("input");
+            tempInput.value = window.currentSecretShareUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            showToast("¡Enlace secreto copiado! Envíalo por WhatsApp", "fa-copy");
+        };
+
+        function checkUrlForSecretGift() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const secretParam = urlParams.get('secret');
+            if (secretParam) {
+                try {
+                    const decoded = decodeURIComponent(atob(secretParam));
+                    secretGiftText = decoded;
+                    switchTab('secret');
+                    document.getElementById('gift-box-area').classList.remove('hidden');
+                    showToast("¡Has recibido un reto secreto! Toca la caja para abrirlo", "fa-gift");
+                } catch(e) {
+                    console.error("Error decodificando reto secreto:", e);
+                }
+            }
+        }
+
+        window.showJoinRoomInput = function() {
+            const container = document.getElementById('join-input-container');
+            container.classList.toggle('hidden');
+        };
+
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(message, iconClass = "fa-circle-info") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+            toastIcon.className = `fa-solid ${iconClass} text-brand-rose`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
